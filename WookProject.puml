@@ -1,0 +1,79 @@
+@startuml
+!theme materia
+title Wook Project - Domain Model Class Diagram
+
+
+'Member는 회원이다.'
+class Member {
+  - id: Long
+  - name: String
+  - licence: Boolean
+  - email: String <<unique>>
+  - password: String
+  - rent : Rent
+  --
+  '더티 체킹용'
+  updateMember(MemberDTO): void
+}
+
+'Rent는 Member로 부터 예약 받은 정보를 저장하는 객체이다.'
+class Rent {
+  - id: Long
+  - rentDate: LocalDate
+  - duration: int
+  - endDate: LocalDate
+  - rentCars : RentCars
+}
+
+'RentCars는 차량 전부를 저장한 객체이다.'
+class RentCars {
+  - id: Long
+  - name: String
+  - recommend: Long
+  - rentPrice: int
+  - totalDistance: int
+  - Category : Category
+  --
+}
+
+'차량의 카테고리를 따로 빼놓은 객체이다.'
+class Category {
+ - id: Long
+ - rentCarsSegment: RentCarsSegment
+ - fuelType: FuelType
+}
+
+enum RentCarsSegment<<enumeration>>{
+    SMALL
+    MEDIUM
+    LARGE
+}
+
+enum FuelType<<enumeration>>{
+    GASOLINE
+    ELECTRIC
+    DIESEL
+    HYBRID
+}
+
+' --- 관계 정의 (JPA 어노테이션 기반) --- '
+
+'Member to Rent'
+Member "1" --> "0..1" Rent :  렌트서비스 이용 >
+
+'Rent to RentCars'
+Rent "1" --> "1" RentCars :  렌트카 정보를 예약 정보에서 조회 <
+
+
+
+
+'RentCars to Category'
+RentCars "*" --> "1" Category : 렌트카 정보에서 여러 카테고리를 참고 <
+
+'Category to RentCarsSegment'
+Category --> RentCarsSegment : uses
+
+Category --> FuelType : uses
+
+
+@enduml

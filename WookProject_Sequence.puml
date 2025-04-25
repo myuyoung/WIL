@@ -1,0 +1,62 @@
+@startuml
+!theme materia
+title Wook Project - Member Registration Sequence Diagram
+
+' 참여자 정의 '
+actor User
+participant "RegisterController" as Controller
+participant "MemberService" as Service
+participant "MemberRepository" as Repo
+participant "PasswordEncoder" as Encoder
+database Database as DB
+
+' 메시지 흐름 시작 '
+User -> Controller : POST /register/detail (dto: RegisterMemberDTO)
+activate Controller
+
+Controller -> Service : registerMember(dto)
+activate Service
+
+Service -> Repo : findByEmail(dto.getEmail())
+activate Repo
+Repo -> DB : SELECT ... FROM Member WHERE email = ?
+activate DB
+DB --> Repo : Optional<Member>
+deactivate DB
+Repo --> Service : foundMember (Optional)
+deactivate Repo
+
+' 조건 분기: 이메일 존재 여부 '
+alt email does not exist [!foundMember.isPresent()]
+    Service -> Encoder : encode(dto.getPassword())
+    activate Encoder
+    Encoder --> Service : encodedPassword
+    deactivate Encoder
+
+    ' Member 객체 생성 (Service 내부 로직) '
+    Service -> Service : create Member entity
+    note right : Member 객체 생성 및\nencodedPassword 설정
+
+    Service -> Repo : save(member)
+    activate Repo
+    Repo -> DB : INSERT INTO Member (...)
+    activate DB
+    DB --> Repo : savedMember
+    deactivate DB
+    Repo --> Service : savedMember
+    deactivate Repo
+
+    Service --> Controller : void ' 성공적으로 반환 '
+else email already exists [foundMember.isPresent()]
+    Service --> Controller : throws RuntimeException("이미 존재하는 회원입니다.")
+    note right: 중복 이메일 예외 발생!
+    ' Controller 또는 전역 예외 핸들러가 처리 '
+end
+
+deactivate Service
+
+' Controller의 응답 처리 (성공 시) '
+Controller -> User : HTTP 3xx Redirect (to /login)
+deactivate Controller
+
+@enduml

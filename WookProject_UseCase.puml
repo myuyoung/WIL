@@ -1,0 +1,37 @@
+@startuml
+!theme materia
+title Wook Project - Use Case Diagram (Member Focus)
+
+left to right direction
+
+' 액터 정의 '
+actor "회원 (Member)" as Member
+
+' 시스템 경계 및 유스케이스 정의 '
+rectangle "Wook 렌터카 시스템" {
+  usecase "UC1: 회원 가입" as UC_Register
+  usecase "UC2: 로그인" as UC_Login
+  usecase "UC3: 로그아웃" as UC_Logout
+  usecase "UC4: 차량 검색" as UC_Search
+  usecase "UC5: 차량 예약" as UC_Reserve
+  usecase "UC6: 내 정보 관리" as UC_MyInfo
+  usecase "UC7: 예약 내역 확인" as UC_CheckReserve
+}
+
+' 액터와 유스케이스 간의 연관 관계 '
+Member -- UC_Register
+Member -- UC_Login
+Member -- UC_Logout
+Member -- UC_Search
+Member -- UC_Reserve
+Member -- UC_MyInfo
+Member -- UC_CheckReserve
+
+usecase "비밀번호 변경" as UC_ChangePassword
+UC_ChangePassword .up.> UC_MyInfo : <<extend>>
+
+UC_Reserve ..> UC_Login : <<include>>
+UC_MyInfo ..> UC_Login : <<include>>
+UC_CheckReserve ..> UC_Login : <<include>>
+UC_Logout ..> UC_Login : <<include>>
+@enduml

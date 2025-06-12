@@ -4,7 +4,7 @@
 ## [2 - 예외](#2예외)
 ## [3 - API와 BindingResult](#3api와-bindingresult)
 ## [4 - 로그인 실패 로직](#4로그인-실패-로직)
-## [5 - 유지보수를 위한 전략(Entity)](#5유지보수를-위한-전략Entity)
+## [5 - 유지보수를 위한 전략(Entity)](#5유지보수를-위한-전략entity)
 ## [6 - MapStruct](#6MapStruct)
 ## [7 - Build](#7build)
 

@@ -1,6 +1,6 @@
 # What I Learn
 
-## [1 - UML](#1UML)
+## [1 - UML](#1uml)
 ## [2 - 예외](#2예외)
 ## [3 - API와 BindingResult](#3api와-bindingresult)
 ## [4 - 로그인 실패 로직](#4로그인-실패-로직)

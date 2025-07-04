@@ -5,8 +5,11 @@
 ## [3 - API와 BindingResult](#3api와-bindingresult)
 ## [4 - 로그인 실패 로직](#4로그인-실패-로직)
 ## [5 - 유지보수를 위한 전략(Entity)](#5유지보수를-위한-전략entity)
-## [6 - MapStruct](#6MapStruct)
+## [6 - MapStruct](#6mapStruct)
 ## [7 - Build](#7build)
+## [8 - EventListener](#8eventlistener)
+## [9 - Swagger(UI웹페이지 와 마크다운으로 표현하기)](#9swaggerui웹페이지-와-마크다운으로-표현하기)
+## [10 - 스프링 시큐리티의 frameOptions 설정](#10스프링-시큐리티의-frameoptions-설정)
 
 ## 1.UML
 
@@ -385,23 +388,235 @@ public class Member {
   엔티티 객체에 필드를 변경할 경우, DTO객체와 엔티티 객체를 변환하는 매퍼클래스를 각각 변환해야하는 경우가 생겼다. 이를 해결하기 위하여 라이브러리 중 MapSturct를 적용하고자 했다.
   무엇보다 MapSturct는 컴파일 시 매핑 오류를 발견할 수 있게 되었다.
 ### 6.3 내용
-  MapStruct는 Java의 어노테이션 프로세서로 동작한다. 컴파일 과정에서 @Mapper 어노테이션이 붙은 인터페이스를 찾아내고, 정의된 매핑 규칙에 따라 해당 인터페이스의 구현 클래스를 생성한다. 이생성된 코드가 실제 매핑 로직을 수행한다.
+  `@Mapper` 어노테이션을 사용하여 DTO와 엔티티 간의 변환 메소드를 정의하는 인터페이스를 작성합니다. 이 인터페이스에는 어떤 객체를 어떤 객체로 변환할지에 대한 추상 메서드만 선언한다.
+  <br>
+  <br>
+
+  <br>
+  <br>
+
+  프로젝트가 컴파일 될 때, MapStruct의 어노테이션 프로세서는 프로젝트 내의 모든 `@Mapper`어노테이션을 찾아낸 후 찾아낸 매퍼 인터페이스의 메소드 시그니처와 필드 이름을 분석한다. 분석한 정보를 바탕으로, 실제 매핑 로직이 담긴 구현 클래스를 자동으로 생성한다. 자동으로 생성된 구현 클래스 내부를 보면, 리플렉션 방식이 아닌 직접 필드 값을 가져오는 Getter와 설정하는 Setter또는 Builder 코드로 구성되어 있다. 그래서 리플렉션 방식에 비해 훨씬 빠르다.
+  <br>
+  <br>
+  스프링 빈 등록 및 사용 하는 방법은 아래와 같다.
+  <br>
+  <br>
+  `@Mapper(componentModel = "spring")`옵션으로 자동으로 생성된 구현 클래스에는 @Component 어노테이션이 함께 붙게 된다. 이 덕분에 애플리케이션이 실행될 때 Spring의 `ComponentScan`이 해당 구현체를 감지하여 스프링 컨테이너에 빈으로 등록이 된다.
+
 ### 6.4 결과
+컨트롤러에서 직접적으로 엔티티 객체를 사용하는 것은 지양된다. 따라서 엔티티 객체를 DTO로, DTO를 엔티티 객체로 변환하는 작업이 필요하다. 컨트롤러 계층과 서비스 계층에서 사용되는 DTO가 다를 때마다 일일이 변환 작업을 하는 작업과 비교하여 간편하게 인터페이스로 변환이 가능하게 되므로 유지보수성이 뛰어나다고 평가할 수 있다.
 ### 6.5 소감
+DTO와 엔티티 객체 간의 변환이 많지 않다면 필요성을 많이 느끼지 못하였겠지만 
+그 수가 늘어날수록 MapStruct의 기능이 편리하다는 것을 느꼈다. 또한, 컴파일 시 경고혹은 에러로 알려주기 때문에 예외상황을 회피 할 수 있었다.
 
 ## 7.build
 ### 7.1 목적
   프로젝트를 실행하는데 빈 이름 중복 에러가 생겼다.
-에러 코드에는 MapStruct를 사용하고 있는데 
-  build tool을 인텔리제이로 할 것인지 gradle로 할 것인지
+왜 생겼는지 분석하는 과정에서 build의 종류가 있다는 것을 알았다.
+
 ### 7.2 과정
+MapStruct는 Q클래스를 이용하여 가상의 클래스를 주입받는 형식이다. 그런데 내가 원본클래스를 다른 경로로 리팩토링 하는 과정에서 Q클래스의 정보가 두개가 생기는 오류가 생긴것이다. 그래서 out폴더를 모두 지워 다시 빌드하는 과정을 거쳤음에도 계속해서 오류가 생겼다. 이를 해결하기 위해 구글에 검색해보았다.
+
 ### 7.3 내용
+Gradle과 IntelliJ 빌드 설정은 결과물을 만드는 방식의 차이가 있다. 바로 IntelliJ는 증분 빌드라는 것이다. 증분 빌드는 변경된 부분만 빌드를 하는 방식으로, 변경되지 않는 것에 대해서는 건너뛰고 빌드를 진행해서 빠른 빌드가 가능하다. 하지만 증분 빌드는 이미 삭제한 파일에 대해서 변경 사항이 없다라고 판단을 하는데, 이는 내가 겪은 오류 상황과 일치하는 상황이라는 것이다. 결과물에 삭제됐던 파일이 그대로 포함 된 상태로 빌드가 완료되었기 때문에 중복된 빈이 등록되었다는 에러를 마주하게 된것이다. 따라서 정확한 빌드를 하기 위해서는 IntelliJ방식이 아닌 Gradle방식으로 빌드 해야한다.
+[참고](https://pamyferret.tistory.com/62)
 ### 7,4 결과
+out폴더를 지우고 설정에서 빌드 방식을 Gradle로 변경 하여 build파일이 생성되었고 이를 실행해보니 이상없이 동작하였다. 혹시 몰라서 빌드 방식을 IntelliJ방식으로 바꾸었을 때도 이상없이 동작하였다.
 ### 7.5 소감
+강의나 책에서 IntelliJ내부 빌드 방식을 선택하게 되면 빠르게 결과물을 확인 할 수 있다는 장점만을 알려주었다. 나는 "아 그냥 빠르게 되는구나"하고 생각하고 말았는데 단순한 선택지 인줄 알았는데 다 이유가 있다는 것을 깨달았다.
 
 ## 8.EventListener
 ### 8.1 목적
+로그인 실패 시에 그 횟수를 체크해야하는 클래스가 필요했다. 
 ### 8.2 과정
+Spring Security에는 LoginEventListener클래스가 존재했다. Spring Security에만 EventListener가 존재하는 것은 아닌것을 알고 이 클래스로 다양한 로직을 작성할 수 있을 것 같아 알아봤다.
 ### 8.3 내용
+EventListener는 말 그대로 특정 사건을 감지하고 그 사건이 발생했을 때 약속된 작업을 수행하도록 등록된 객체를 의미한다. 이는 옵저버 패턴의 대표적인 구현 방식이다.
+3가지 항목으로 나뉘어지는데 다음과 같다.
+- 이벤트 소스 : 이벤트를 발생시키는 주체이다.(예: 버튼클릭, 메시지 도착, 애플리케이션 실행 완료)
+- 이벤트 객체: 발생한 이벤트에 대한 정보를 담고 있는 객체이다.(예:어떤 버튼이 클릭 되었는지, 어떤 메시지가 도착했는지)
+- 이벤트 리스너: 이벤트 소스를 주시하다가, 특정 이벤트가 발생하면 이벤트 객체를 전달받아 로직을 처리하는 객체이다.
+
 ### 8.4 결과
+시나리오: 신규 회원가입 시, 환영 이메일을 비동기적으로 발송하기
+
+1. 커스텀 이벤트(Event) 정의하기
+먼저, '회원가입'이라는 사건을 표현할 이벤트 객체를 만듭니다. ApplicationEvent를 상속받아 생성합니다.
+```Java
+// UserRegistrationEvent.java
+import org.springframework.context.ApplicationEvent;
+import lombok.Getter;
+
+/**
+ * 회원가입이 발생했을 때의 정보를 담는 이벤트 객체
+ */
+@Getter
+public class UserRegistrationEvent extends ApplicationEvent {
+
+    private final String userEmail;
+    private final String userName;
+
+    /**
+     * @param source 이벤트를 발생시킨 객체 (보통 this를 전달)
+     * @param userEmail 이메일 발송에 필요한 사용자의 이메일 주소
+     * @param userName 이메일 내용에 사용할 사용자의 이름
+     */
+    public UserRegistrationEvent(Object source, String userEmail, String userName) {
+        super(source);
+        this.userEmail = userEmail;
+        this.userName = userName;
+    }
+}
+```
+2. 이벤트 발행(Publish)하기
+UserService에서 회원가입 로직을 처리한 후, 이벤트를 발행(Publish)합니다. ApplicationEventPublisher를 주입받아 사용합니다.
+
+```Java
+
+// UserService.java
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final MemberRepository memberRepository; // 가상의 리포지토리
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
+    public void registerUser(String email, String name, String password) {
+        // 1. 회원 정보 저장 로직 (DB에 저장)
+        Member newMember = memberRepository.save(new Member(email, name, password));
+        System.out.println("DB에 회원 정보 저장 완료: " + newMember.getName());
+
+        // 2. 회원가입 이벤트 발행!
+        // "회원가입이 완료되었습니다!" 라고 시스템에 알리는 과정
+        eventPublisher.publishEvent(new UserRegistrationEvent(this, newMember.getEmail(), newMember.getName()));
+
+        System.out.println("회원가입 로직 종료. API 응답은 즉시 반환됩니다.");
+    }
+}
+```
+
+3. 이벤트 리스너(Listener) 구현하기
+이제 발행된 UserRegistrationEvent를 수신하여 실제 이메일 발송 로직을 처리할 리스너를 만듭니다.
+
+@EventListener 어노테이션을 사용하면 ApplicationListener 인터페이스를 직접 구현하지 않아도 되어 코드가 간결해집니다.
+
+@Async 어노테이션을 붙여 이 메소드가 별도의 스레드에서 비동기적으로 실행되도록 설정합니다.
+
+```Java
+
+// UserRegistrationListener.java
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class UserRegistrationListener {
+
+    /**
+     * UserRegistrationEvent 타입의 이벤트가 발생하면 이 메소드가 실행됨
+     */
+    @Async // 이 리스너를 비동기적으로 실행하도록 설정
+    @EventListener
+    public void handleUserRegistrationEvent(UserRegistrationEvent event) {
+        log.info("쓰레드: {}", Thread.currentThread().getName());
+        log.info("비동기 이벤트 수신: {}님 회원가입을 축하합니다!", event.getUserName());
+
+        // 이메일 발송에 3초가 걸린다고 가정
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            log.error("이메일 발송 중 오류 발생", e);
+        }
+
+        log.info("{}님에게 환영 이메일 발송 완료! (To: {})", event.getUserName(), event.getUserEmail());
+    }
+}
+```
+
+4. 비동기 기능 활성화하기
+@Async 어노테이션이 동작하려면, 애플리케이션의 메인 클래스나 설정 클래스에 @EnableAsync를 추가해야 합니다.
+
+```Java
+
+// Application.java (메인 클래스)
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@EnableAsync // 비동기 기능 활성화
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
+
 ### 8.5 소감
+Event Listener를 이용하여 다양한 로직을 사용할 수 있는 가능성을 느겼다.
+
+## 9.Swagger(UI웹페이지 와 마크다운으로 표현하기)
+### 9.1 목적
+프로젝트의 규모가 커지고 API의 개수가 많아짐에 따라 API명세를 효율적이고 명확하게 제시해야할 필요가 있었다.
+### 9.2 과정
+Postman을 사용하여 테스트하고 수동으로 명세를 작성하는 것이 비효울적이라고 생각하여 자동화 할수 있는 방법이 무엇인지를 찾아보았다.
+### 9.3 내용
+1. `build.gradle` 파일에 SpringDoc OpenAPI 라이브러리 의존성을 추가한다.(아래는 Spring Boot 3.x 버전이다.)
+``` 
+implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+```
+2. API 정보 보강을 위한 어노테이션 적용 
+   1. Controller: `@Tag`를 사용하여 API 기능별로 그룹화하고, `@Operation`으로 각 API의 요약 설명을, `@ApiResponse`로 응답 코드별 설명을 추가할 수 있다.
+   2. DTO: `@Schema`어노테이션을 사용하여 각 필드의 설명과 예시를 명시할 수 있다.
+3. Swagger UI 접속 및 확인<br>
+    애플리케이션을 실행한 후, 브라우저에서 `http://localhost:port/swagger-ui/html`주소로 접속하여 자동으로 생성된 API문서를 할 수 있다.(다만 Spring Security를 적용하고 있다면 꼭 "/v3/api-docs/**", "/swagger-ui/\**","/swagger-ui.html"는 경로를 허용해 주어야 한다.)
+
+4. 마크다운 문서 생성<br>
+    1. `http://localhost:port/v3/api-docs`에 접속한다.
+    2. 표시되는 JSON 내용 전체를 복사하여, 프로젝트 최상위 폴더에 openapi.json이라는 이름으로 저장한다.
+    3. 터미널에서 프로젝트 폴더로 이동한 뒤, 완성형 명령어를 실행한다.
+    `npx widdershins --expandBody --httpsnippet --language_tabs 'shell:curl' --summary true openapi.json -o API.md`
+
+### 9.4 결과
+[프로젝트 내에 적용한 API.md링크](https://github.com/myuyoung/RentCarService/blob/6cc9e61e2c21c728916b09e96c1ecbc40b2c42b7/API.md)
+### 9.5 소감
+프로젝트 깃허브에 README마크다운을 작성하는 과정에서 API명세를 뚜렷히 표현하고 싶은데 어떤 방법이 있을까 찾아보았다. API명세를 자동으로 작성해주면서 명확하게 보여줄 수 있는 방법이 있어 효율적이었다.
+
+## 10.스프링 시큐리티의 frameOptions 설정
+### 10.1 목적
+로컬 개발 환경에서 데이터베이스의 상태를 직접 확인하고 쿼리를 실행해보기 위해 내장된 H2 데이터베이스 콘솔을 사용하고자 했다. 그러나 `ERR_BLOCKED_BY_RESPONSE`라는 에러 메세지가 출력되었다.
+이 문제의 원인을 파악하고, 보안 설정을 유지하면서 해결하려고 했다.
+### 10.2 과정
+ 브라우저 개발자 도구의 콘솔을 확인한 결과, 오류 메세지가 `X-Frame-Options`헤더 값이 'DENY'로 설정되어 있어 페이지를 프레임에 표시할 수 없다 라고 되어있었다.
+<br>
+<br>
+ 이게 뭔가 해서 찾아보앗는데 Spring Security는 기본적으로 클릭재킹 공격을 방어하기 위해 `X-Frame-Options`헤더를 DENY로 설정하여, 외부 페이지는 물론 같은 출처의 페이지에서도 `<frame>`내에 페이지를 렌더링하는 것을 차단한다고 한다.
+ H2 콘솔의 웹 UI가 내부적으로 `<frame>`을 사용하기 때문에 Spring Security 기본 보안 정책과 충돌이 발생한 것이었다.
+<br>
+<br>
+ 참고로 클릭재킹은 사용자가 인지하지 못하는 사이에, 눈에 보이지 않는 악의적인 `<iframe>`을 정상적인 페이지 위에 겹쳐놓고 사용자가 버튼을 클릭하도록 유도하여 의도치 않은 동작을 하게하는 해킹 기법이다.
+  
+### 10.3 내용
+  Spring Security의 헤더 설정은 응답에 다양한 보안 관련 HTTP헤더를 추가하는 역할을 한다. 그 중 frameOptions()는 `X-Frame-Options`헤더를 제어하여 클릭재킹 공격을 방어할 수 있다.
+<br>
+<br>
+  `X-Frame-Options`헤더는 해당 페이지를 프레임 내에서 렌더링할 수 있는지 여부를 알려주는 헤더이다. 나는 프로젝트에서 동일한 출처를 가진 페이지 내의 프레임에서만 표시할 수 있게끔 하는 `SAMEORIGIN`를 적용하였다. 여기에서 동일한 출처는 예를 들면 로컬에서 개발할때의 URL인 `localhost`이다.
+
+### 10.4 결과
+아래는 내 프로젝트 설정의 일부를 가져온 것이다.
+
+``` Java
+.headers(headers-> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+```
+
+### 10.5 소감
+Spring Security가 얼마나 강력하고 안전한 설정을 지향하는지 다시 한번 체감하였다. HTTP 보안 헤더와 클릭재킹이라는 해킹 기법을 학습하게 된 계기가 되었다. 세상에는 참 많은 해킹 기법과 그걸 방어하기 위한 기술이 많이 있다는 것을 세삼 느끼게 되었다. 책에서 배운 Spring Security는 작동에 기준을 맞췄는데 어떤 배경과 원리로 동작하는지를 이해하는 것이 얼마나 중요한지를 깨닫게되었다. 자기계발을 게을리 하지말자고 다짐했다.
